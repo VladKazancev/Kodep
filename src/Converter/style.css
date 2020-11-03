@@ -1,0 +1,25 @@
+body{
+  font: 20px "Century Gothic", Futura, sans-serif;
+}
+h3{
+  font-weight: 300;
+  margin-left: 15px;
+}
+select:focus{
+  outline: none;
+}
+.flexRow{
+  display: flex;
+  width: 350px;
+  align-items: center;
+  justify-content: space-around;
+  margin-bottom: 25px;
+}
+.mainBoard{
+  margin: 15px;
+  display: flex;
+  align-items: center;
+  height: 70vh;
+  justify-content: center;
+}
+  
