@@ -1,8 +1,8 @@
 import React from 'react';
 import '../style.css';
 export default function SelectRow(props) {
-  const options = props.rate.map((current, index) => {
-    return <option key={index} value={current.tag}>{current.tag}</option>
+  const options = Object.keys(props.rate).map((current, index) => {
+    return <option key={index} value={current}>{current}</option>
   });
   return (
     <div className="flexRow">

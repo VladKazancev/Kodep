@@ -1,77 +1,52 @@
 import React from 'react';
 import './style.css';
-import {digitChecking} from '../OtherFunctions.js';
+import {digitChecking, changeInputHelper, changeListHelper,
+  сalculating}  from '../OtherFunctions.js';
 import ExchangeRow from './ExchangeRow';
 import SelectRow from './SelectRow';
 export default class Converter extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      rate: [{ tag: 'RUB', value: 1 }],
       currentValueLeft: { tag: 'USD', value: '', rate: 1 },
       currentValueRight: { tag: 'RUB', value: '', rate: 1 },
+      rate: {},
     };
     this.getRate();
     this.handleChangeInput = this.handleChangeInput.bind(this);
   }
 
   handleChangelist(e) {
-    const currentRate = this.state.rate.find((element) => {
-      return element.tag === e.target.value ? true : false;
-    });
-    const currentValueRight = this.state.currentValueRight;
-    const currentValueLeft = this.state.currentValueLeft;
-    if (e.target.name === 'left') {
-      const valueRight = this.state.currentValueLeft.value *
-        currentRate.value / this.state.currentValueRight.rate;
-      currentValueRight.value = isNaN(valueRight) ? '' : Number(valueRight.toFixed(3));
-      currentValueLeft.tag = e.target.value;
-      currentValueLeft.rate = currentRate.value;
+    let [currentValueLeft, currentValueRight] = Object.values(this.state);
+    const [target, currentRate] = [e.target, this.state.rate[e.target.value]];
+    if (target.name === 'left') {
+      currentValueRight.value = сalculating(currentValueLeft.value, currentRate,
+        currentValueRight.rate);
+      changeListHelper(currentValueLeft, currentRate, target.value);
+    }else changeListHelper(currentValueRight, currentRate, target.value, currentValueLeft);
+    this.setStateHelper(currentValueRight, currentValueLeft);
+  }
+
+  handleClickLink(e) {
+    e.preventDefault();
+    this.setStateHelper(this.state.currentValueLeft, this.state.currentValueRight);
+  }
+
+  handleChangeInput(e) {
+    const target = e.target;
+    if (digitChecking(target.value) !== null) {
+      let [currentValueLeft, currentValueRight] = Object.values(this.state);
+      if (target.name === 'left') changeInputHelper(currentValueRight, currentValueLeft, target.value);
+      else changeInputHelper(currentValueLeft, currentValueRight, target.value);
+      this.setStateHelper(currentValueRight, currentValueLeft);
     }
-    else {
-      currentValueRight.tag = e.target.value;
-      currentValueRight.rate = currentRate.value;
-      const valueRight = this.state.currentValueLeft.value *
-        this.state.currentValueLeft.rate / currentRate.value;
-      currentValueRight.value = isNaN(valueRight) ? '' : Number(valueRight.toFixed(3));
-    }
+  }
+
+  setStateHelper(currentValueRight, currentValueLeft){
     this.setState({
       currentValueRight: currentValueRight,
       currentValueLeft: currentValueLeft,
     });
-
-  }
-
-  handleClick(e) {
-    e.preventDefault();
-    const currentValueRight = this.state.currentValueRight;
-    const currentValueLeft = this.state.currentValueLeft;
-    this.setState({
-      currentValueRight: currentValueLeft,
-      currentValueLeft: currentValueRight,
-    });
-  }
-
-  handleChangeInput(e) {
-    if (digitChecking(e.target.value) !== null) {
-      const currentValueRight = this.state.currentValueRight;
-      const currentValueLeft = this.state.currentValueLeft;
-      if (e.target.name === 'left') {
-        const valueRight = e.target.value * this.state.currentValueLeft.rate /
-          this.state.currentValueRight.rate;
-        currentValueRight.value = isNaN(valueRight) ? '' : Number(valueRight.toFixed(3));
-        currentValueLeft.value = e.target.value;
-      } else {
-        const valueLeft = e.target.value * this.state.currentValueRight.rate /
-        this.state.currentValueLeft.rate;
-        currentValueLeft.value = isNaN(valueLeft) ? '' : Number(valueLeft.toFixed(3));
-        currentValueRight.value = e.target.value;
-      }
-      this.setState({
-        currentValueRight: currentValueRight,
-        currentValueLeft: currentValueLeft,
-      });
-    }
   }
 
   getRate() {
@@ -80,22 +55,14 @@ export default class Converter extends React.Component {
         return response.json();
       })
       .then(response => {
-        let valutes = [];
-        const data = response.Valute;
-        for (let item in data) {
-          valutes.push({
-            tag: data[item.toString()].CharCode,
-            value: data[item.toString()].Value / data[item.toString()].Nominal
-          });
-
-        }
-        const currentValueLeft = this.state.currentValueLeft;
-        const rateUSD = valutes.find((element) => {
-          return element.tag === 'USD' ? true : false;
-        });
-        currentValueLeft.rate = rateUSD.value;
+        const [data, valutes, currentValueLeft] = [response.Valute, {RUB: 1},
+          this.state.currentValueLeft];
+        for (let item in data)
+          valutes[data[item.toString()].CharCode] =  data[item.toString()].Value /
+            data[item.toString()].Nominal;
+        currentValueLeft.rate = valutes.USD;
         this.setState({
-          rate: this.state.rate.concat(valutes),
+          rate: valutes,
           currentValueLeft: currentValueLeft,
         });
       });
@@ -118,7 +85,7 @@ export default class Converter extends React.Component {
             onChange={this.handleChangeInput}
           />
           <div className="flexRow">
-            <a href="#" onClick={(e) => this.handleClick(e)}>Поменять местами</a>
+            <a href="#" onClick={(e) => this.handleClickLink(e)}>Поменять местами</a>
           </div>
         </div>
       </div>
