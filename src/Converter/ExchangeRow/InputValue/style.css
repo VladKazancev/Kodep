@@ -1,0 +1,8 @@
+.text{
+  max-width: 75px;
+}
+.flexBox{
+  display: flex;
+  width: 140px;
+  justify-content: space-around;
+}
